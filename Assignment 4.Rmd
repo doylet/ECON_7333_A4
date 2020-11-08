@@ -1,0 +1,315 @@
+---
+title: "Assignment 4"
+output:
+  pdf_document: default
+  html_document: 
+    keep_md: yes
+editor_options:
+  chunk_output_type: inline
+---
+
+
+
+# Exercise 1
+
+## Task 1
+
+Basis of step functionss
+
+```{r}
+
+region_matrix <- function(x,K) {
+  #' @param `x` "vector" a continuous variable
+  #' @param `K` "constant"
+  options(list("warn"=-1))
+  C <- levels(cut(x,K))
+  bin_matrix <- cbind(
+    a = as.numeric( sub("\\((.+),.*", "\\1", C)),
+    b = as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", C))
+  )
+  return(as.data.frame(bin_matrix))
+}
+
+```
+
+```{r}
+
+I1 <- function(x,K) {
+  n <- length(x)
+  a <- min(x)
+  K <- K+1
+  interval <- range(x)[2]-range(x)[1]
+  k <- ceiling(interval / K)
+
+  m <- matrix(0,n,K)
+  
+  for(j in 1:K) {
+    b <- ceiling(a+k)
+    
+    m[,j] <- a <= x & x < b
+    a <- b
+  }
+  
+  return(
+    as.matrix(m)
+  )
+}
+
+I2 <- function(x,K) {
+  n <- length(x)
+  K <- K+1
+
+  r <- region_matrix(x,K)
+  m <- matrix(0,n,K)
+  
+  for(j in 1:K) {
+    a <- r$a[j]
+    b <- r$b[j]
+    
+    m[,j] <- x < b & x >= a
+  }
+  
+  return(
+    list(
+      c_matrix = as.matrix(m),
+      c_regions = r
+    )
+  )
+}
+
+stepfun1 <- function(x,K) {
+  #' @param `x` vector of obs
+  #' @param `K` number of steps
+  
+  X <- I2(x,K)$c_matrix
+  y <- x
+  
+  weights <- solve(t(X)%*%X)%*%t(X)%*%y
+
+  # step <- lm(x~,ISLR::Wage)
+  return (
+    # matrix of step functions
+    structure(
+      list(
+        weights = t(weights),
+        intervals = as.data.frame(I2(x,K)$c_regions)[2],
+        step_matrix = as.matrix(I2(x,K)$c_matrix)
+      )
+    )
+  )
+}
+```
+
+```{r}
+stepfun1(age,5)
+lm(age~cut(age,5+1))
+```
+
+## Task 2
+
+Hierarchical clustering
+
+```{r}
+
+X=mtcars
+plot.new()
+plot(hclust(dist(X)))
+# heatmap(as.matrix(dist(X)))
+```
+
+```{r}
+##' @return `data.frame` containing pairwise dissimilarity matrix
+pd <- function(X) 
+{
+  N <- nrow(X)
+  
+  rownames(X) <- 1:N*-1
+  
+  x <- as.data.frame(as.matrix(dist(X)))
+  
+  # Set diag to inf
+  diag(x) <- Inf
+  return(
+    x
+  )
+}
+
+##' @return object class 'hclust'
+h_clust <- function(X)
+{
+  # pairwise dissimilarity matrix
+  # Euclidian distance
+  x <- pd(X)
+  
+  N <- nrow(x)
+  N_1 <- N-1 
+
+  # Initialise objects
+  merge <- matrix(0,N_1,2)
+  height <- vector(length=N_1)
+  clusters <- lapply(1:N_1,function(x) x)
+  
+  for(m in 1:N_1) {
+  # for(m in 1:2) {
+    cols <- colnames(x)
+    
+    # find pair of clusters of least dissimilar
+    cl <- which(x==min(x),arr.ind=TRUE)[1,,drop=FALSE]
+    
+    # record the pair of clusters
+    merge[m,] <- as.numeric(cols[cl])
+    
+    # merge the pair
+    l <- apply(x[cl,],2,max)
+    x[min(cl),] <- l
+    x[,min(cl)] <- l
+    
+    # 
+    x[cl] <- Inf
+    x[max(cl),] <- Inf
+    x[,max(cl)] <- Inf
+    
+    cluster <- c(
+      cl,
+      which(cols %in% cols[cl[1,cols[cl[1]] > 0]])
+    )
+    
+    # record cluster
+    colnames(x)[cluster] <- m
+    
+    clusters[[m]] <- cluster
+    
+    # height of dendogram at fusion point
+    height[m] <- min(x)
+    
+  }
+  return(
+    structure(
+      list(
+        merge=merge,
+        height=height,
+        clusters=clusters
+      ),
+      class='hclust'
+    )
+  )
+}
+
+h_clust(X)$merge
+
+```
+
+## Task 3
+
+Linear aggregation of M classifiers
+```{r}
+M <- 1000
+w <- runif(M)
+response <- rep(0,M)
+response[w > .7] <- 1
+
+input <- w
+boxplot(input~response)
+```
+
+credit score and default
+
+leading economic indicator and interest rate change
+
+barometer and rainfall event
+
+## Task 4
+
+```{r}
+Smarket <- ISLR::Smarket
+
+cov_matrix <- function(X) 
+{
+  
+  
+  
+}
+
+```
+
+```{r}
+discriminant_function <- function(x_k) {
+  mu_k <- mean(x_k)
+  
+}
+
+```
+
+# Exercise 2
+
+k-fold cross validation
+
+```{r}
+c_k = function(d,k) {
+  #' @d data matrix n * 2
+  #' @k number of k-fold intervals
+  
+  # Get size of n -- num rows from d
+  n = dim(d)[1]
+  
+  # Input var X 
+  X = d[,1]
+  # Response var Y
+  Y = d[,2]
+  
+  # k-folds
+  #' 
+  kf = 10
+  
+  # int vector ck length kf
+  # initialised with zeros
+  ck = rep(0,kf)
+  
+  # For each kf[i]
+  # estimate ith k-fold MSE
+  for (i in 1:kf) {
+    
+    #' lower bound fold
+    ii = ceiling(1+n*(i-1)/kf)
+    
+    #' upper bound fold
+    ii2 = ceiling(n*i/kf)
+    
+    #' train subset
+    tt = ii:ii2
+    
+    #' index of 
+    #' train fold - out of sample
+    tr = setdiff(1:n,tt)
+    
+    #' Bayesian post estimate
+    bh = sum(X[tr]*Y[tr]/sum(X[tr]^2))
+    
+    yh = X[tt]*bh
+    
+    #' ith C_k=kf
+    #' test mean square error
+    ck[i] = mean((Y[tt] - yh)^2)
+  }
+  return(mean(ck))
+}
+
+# Vector of random normal 
+X <- rnorm(20,0,1)
+# Vector of 
+Y <- 1+2*X+rnorm(20,0,2)
+m <- matrix(c(X,Y),nrow=20)
+c_k(m)
+```
+
+
+# Exercise 3
+
+```{r}
+X <- runif(10)
+Z <- runif(10)
+Y <- X-Z
+
+
+
+```
