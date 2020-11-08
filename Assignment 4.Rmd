@@ -178,6 +178,7 @@ h_clust <- function(X)
     colnames(x)[cluster] <- m
     
     clusters[[m]] <- cluster
+    # clusters[[m]] <- unique(clusters[[m]])
     
     # height of dendogram at fusion point
     height[m] <- min(x)
@@ -194,9 +195,13 @@ h_clust <- function(X)
     )
   )
 }
+```
 
-h_clust(X)$merge
 
+
+```{r}
+h_clust(X)$clusters
+X[h_clust(X)$clusters[[20]],]
 ```
 
 ## Task 3
