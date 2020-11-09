@@ -62,7 +62,6 @@ I1 <- function(x,K) {
   )
 }
 
-
 cut_2 <- function(x,K) {
   n <- length(x)
   K <- K+1
@@ -227,6 +226,8 @@ h_clust(X)$clusters
 ## Task 3
 
 Linear aggregation of M classifiers
+
+Bagging?
 
 ```{r}
 M <- 1000
