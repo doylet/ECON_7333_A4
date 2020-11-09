@@ -228,12 +228,25 @@ barometer and rainfall event
 ```{r}
 Smarket <- ISLR::Smarket
 
-cov_matrix <- function(X) 
+##' @title Priors
+##' @param `Y` qualitvative response variable
+##' @param `k` kth class
+##' @return `numeric` prior probability
+pi_k <- function(Y,k) 
 {
-  
-  
-  
+  class <- levels(Y)
+  prior <- prop.table(table(Y))
+  return(
+    as.numeric(prior[k])
+  )
 }
+
+##' @title Density function
+df <- function(x,mu,sd)
+{
+  dnorm(x,mu,sd)
+}
+
 
 ```
 
