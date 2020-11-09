@@ -16,18 +16,25 @@ editor_options:
 
 Basis of step functionss
 
+```{r eval=FALSE, include=FALSE}
+# not run
+age <- ISLR::Wage$age
+
+```
+
+
 ```{r}
 
 #' @param `x` "vector" a continuous variable
 #' @param `K` "constant"
 region_matrix <- function(x,K) {
   
-  cut_levels <- levels(cut(x,K))
-  bin_matrix <- cbind(
-    a = as.numeric( sub("\\((.+),.*", "\\1", cut_levels)),
-    b = as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", cut_levels))
+  clevels <- levels(cut(x,K))
+  binmat <- cbind(
+    a = as.numeric(sub("\\((.+),.*","\\1",clevels)),
+    b = as.numeric(sub("[^,]*,([^]]*)\\]","\\1",clevels))
   )
-  return(as.data.frame(bin_matrix))
+  return(as.data.frame(binmat))
 }
 
 ```
@@ -55,7 +62,8 @@ I1 <- function(x,K) {
   )
 }
 
-I2 <- function(x,K) {
+
+cut_2 <- function(x,K) {
   n <- length(x)
   K <- K+1
 
@@ -77,23 +85,28 @@ I2 <- function(x,K) {
   )
 }
 
-stepfun1 <- function(x,K) {
-  #' @param `x` vector of obs
-  #' @param `K` number of steps
+#' 
+#' @param `x` vector of obs
+#' @param `K` number of steps
+stepfun <- function(x,K) {
   
-  X <- I2(x,K)$c_matrix
+  X <- cut_2(x,K)$c_matrix
   y <- x
   
+  #
+  Intervals <- cut_2(x,K)$c_regions
+  names(Intervals) <- c('Lower','Upper')
+  # linear solution
   weights <- solve(t(X)%*%X)%*%t(X)%*%y
-
+  
   # step <- lm(x~,ISLR::Wage)
   return (
     # matrix of step functions
     structure(
       list(
+        intervals = as.data.frame(Intervals),
         weights = t(weights),
-        intervals = as.data.frame(I2(x,K)$c_regions)[2],
-        step_matrix = as.matrix(I2(x,K)$c_matrix)
+        step_matrix = as.matrix(X)
       )
     )
   )
@@ -101,7 +114,7 @@ stepfun1 <- function(x,K) {
 ```
 
 ```{r}
-stepfun1(age,5)
+stepfun(age,5)
 # lm(age~cut(age,5+1))
 ```
 
@@ -111,7 +124,6 @@ Hierarchical clustering
 
 ```{r eval=FALSE, include=FALSE}
 ## not run
-
 X=mtcars
 plot.new()
 plot(hclust(dist(X)))
@@ -215,6 +227,7 @@ h_clust(X)$clusters
 ## Task 3
 
 Linear aggregation of M classifiers
+
 ```{r}
 M <- 1000
 w <- runif(M)
@@ -334,7 +347,6 @@ qda_pred <- MASS::qda(Y~x,CV=TRUE)$class
 
 ```{r}
 predict <- posterior[,apply(posterior,1,which.max)]
-
 ```
 
 # Exercise 2
