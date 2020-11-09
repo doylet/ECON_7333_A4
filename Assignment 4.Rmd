@@ -227,34 +227,105 @@ barometer and rainfall event
 
 ```{r}
 Smarket <- ISLR::Smarket
+x <- Smarket$Today
+Y <- Smarket$Direction
 
-##' @title Priors
-##' @param `Y` qualitvative response variable
-##' @param `k` kth class
-##' @return `numeric` prior probability
-pi_k <- function(Y,k) 
+#' Prior probabilites
+#' @param A vector containing the qualitvative response variable
+#' @return A length K vector containing the prior probabilities
+.pi_k <- function(Y)
 {
-  class <- levels(Y)
-  prior <- prop.table(table(Y))
+  priors <- as.numeric(prop.table(table(Y)))
+  names(priors) <- levels(Y)
   return(
-    as.numeric(prior[k])
+    structure(
+    .Data=priors
+    )
   )
 }
 
-##' @title Density function
-df <- function(x,mu,sd)
+#' @return 
+.mk <- function(x,Y)
 {
-  dnorm(x,mu,sd)
+  mu <- as.numeric(tapply(x,Y,mean))
+  names(mu) <- levels(Y)
+  return(
+    structure(
+      .Data=mu
+    )
+  )
+}
+
+#' @return A n*K covariance matrix 
+.Sk <- function(x,Y)
+{
+  S <- as.numeric(tapply(x,Y,var))
+  names(S) <- levels(Y)
+  return(
+    structure(
+      .Data=S
+    )
+  )
+}
+
+#' Object containing the QDA k parameters
+#' @return list of parameters `mu_k`, `Sigma_k`, and prior probabilities
+pars <- function(x,Y)
+{
+  structure (
+    list(
+      prior=.pi_k(Y),
+      mean=.mk(x,Y),
+      variance=.Sk(x,Y)
+    )
+  )
 }
 
 
+quadratic_df <- function(x,pars)
+{
+  V <- t(as.data.frame(pars))
+  K <- dim(V)[2]
+  n <- length(x)
+  d <- as.data.frame(matrix(0,n,K))
+
+  p <- V[1,] #prior
+  m <- V[2,] #mean
+  S <- V[3,] #variance
+  
+  #' the magic
+  pk <- function(k)
+  {
+    t1 <- -(x^2/(2*S[k]))
+    t2 <- (x*(m[k]/S[k]))
+    t3 <- -(m[k]^2/(2*S[k]))
+    t4 <- log(p[k])
+    t5 <- -log(S[k])
+    
+    return(exp(t1+t2+t3+t4+t5))
+  }
+  
+  d <- sapply(1:K,function(k) pk(k))
+  class <- apply(d,1,function(x) 
+    {
+      colnames(V)[which.max(x)]
+    })
+  
+  colnames(d) <- colnames(V)
+  rownames(d) <- class
+  return(
+    structure(
+      .Data = d
+    )
+  )
+}
+
+posteriors <- quadratic_df(x,pars(x,Y))
+qda_pred <- MASS::qda(Y~x,CV=TRUE)$class
 ```
 
 ```{r}
-discriminant_function <- function(x_k) {
-  mu_k <- mean(x_k)
-  
-}
+predict <- posterior[,apply(posterior,1,which.max)]
 
 ```
 
