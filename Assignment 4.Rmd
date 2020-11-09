@@ -18,14 +18,14 @@ Basis of step functionss
 
 ```{r}
 
+#' @param `x` "vector" a continuous variable
+#' @param `K` "constant"
 region_matrix <- function(x,K) {
-  #' @param `x` "vector" a continuous variable
-  #' @param `K` "constant"
-  options(list("warn"=-1))
-  C <- levels(cut(x,K))
+  
+  cut_levels <- levels(cut(x,K))
   bin_matrix <- cbind(
-    a = as.numeric( sub("\\((.+),.*", "\\1", C)),
-    b = as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", C))
+    a = as.numeric( sub("\\((.+),.*", "\\1", cut_levels)),
+    b = as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", cut_levels))
   )
   return(as.data.frame(bin_matrix))
 }
@@ -102,29 +102,35 @@ stepfun1 <- function(x,K) {
 
 ```{r}
 stepfun1(age,5)
-lm(age~cut(age,5+1))
+# lm(age~cut(age,5+1))
 ```
 
 ## Task 2
 
 Hierarchical clustering
 
-```{r}
+```{r eval=FALSE, include=FALSE}
+## not run
 
 X=mtcars
 plot.new()
 plot(hclust(dist(X)))
-# heatmap(as.matrix(dist(X)))
+
 ```
 
 ```{r}
-##' @return `data.frame` containing pairwise dissimilarity matrix
+
+#' Calculate the pairwise dissimilarity matrix
+#' @return `data.frame` object containing pairwise dissimilarity matrix
 pd <- function(X) 
 {
   N <- nrow(X)
   
+  # negative row indices for building merge table
   rownames(X) <- 1:N*-1
   
+  # Distance matrix with 
+  # upper and lower
   x <- as.data.frame(as.matrix(dist(X)))
   
   # Set diag to inf
@@ -134,7 +140,9 @@ pd <- function(X)
   )
 }
 
-##' @return object class 'hclust'
+#' Perform hierarchical clustering algorithm
+#' @param Matrix X of n obs and p variables
+#' @return object class 'hclust', including n-1 list of cluster indices
 h_clust <- function(X)
 {
   # pairwise dissimilarity matrix
@@ -200,8 +208,8 @@ h_clust <- function(X)
 
 
 ```{r}
+
 h_clust(X)$clusters
-X[h_clust(X)$clusters[[20]],]
 ```
 
 ## Task 3
