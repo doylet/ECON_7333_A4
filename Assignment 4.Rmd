@@ -303,7 +303,10 @@ pars <- function(x,Y)
   )
 }
 
-
+#' Quadratice discriminant function
+#' @param x input var length n
+#' @param pars list of length K vectors containing estimated prior probabilities, sample averages, and sample standard deviation
+#' @return object containing `nK` matrix of posterior probabilities, and length `n` vector of predicted class
 quadratic_df <- function(x,pars)
 {
   V <- t(as.data.frame(pars))
@@ -334,16 +337,17 @@ quadratic_df <- function(x,pars)
     })
   
   colnames(d) <- colnames(V)
-  rownames(d) <- class
+  
   return(
     structure(
-      .Data = d
+      .Data = list(posteriors=d,class=rownames(d))
     )
   )
 }
 
 posteriors <- quadratic_df(x,pars(x,Y))
 qda_pred <- MASS::qda(Y~x,CV=TRUE)$class
+table(rownames(posterior),qda_pred)
 ```
 
 ```{r}
