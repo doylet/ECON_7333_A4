@@ -14,12 +14,7 @@ editor_options:
 
 ## Task 1
 
-Basis of step functionss
-
-```{r eval=FALSE, include=FALSE}
-# not run
-age <- ISLR::Wage$age
-```
+Basis of step functions estimates a coefficient of the constant piecewise .. 
 
 ```{r}
 #' 
@@ -60,7 +55,9 @@ cut_2 <- function(x,K) {
     )
   )
 }
+```
 
+```{r}
 #' 
 #' @param `x` vector of obs
 #' @param `K` number of steps
@@ -76,7 +73,6 @@ stepfun <- function(x,K) {
     # matrix of step functions
     structure(
       list(
-        intervals = as.data.frame(Intervals),
         weights = t(weights),
         step_matrix = as.matrix(X)
       )
@@ -86,19 +82,18 @@ stepfun <- function(x,K) {
 ```
 
 ```{r}
-stepfun(age,5)
-lm(age~cut(age,5+1))
+age <- ISLR::Wage$age
+stepfun(age,5)$weights
 ```
 
 ## Task 2
 
 Hierarchical clustering
 
-```{r eval=FALSE, include=FALSE}
-## not run
-X=mtcars
-plot.new()
-plot(hclust(dist(X)))
+```{r}
+X=mtcars[1:6,]
+# plot.new()
+# plot(hclust(dist(X)))
 
 ```
 
@@ -141,8 +136,8 @@ h_clust <- function(X)
   height <- vector(length=N_1)
   clusters <- lapply(1:N_1,function(x) x)
   
-  for(m in 1:N_1) {
-  # for(m in 1:2) { # if only want first iteration
+  # for(m in 1:N_1) {
+  for(m in 1:2) { # only want first iteration
 
     # Indices
     ind <- colnames(x)
@@ -172,7 +167,7 @@ h_clust <- function(X)
     # record cluster indices
     colnames(x)[cluster] <- m
     
-    clusters[[m]] <- cluster
+    clusters[[m]] <- unique(cluster)
     # clusters[[m]] <- unique(clusters[[m]])
     
     # height of dendogram at fusion point
@@ -196,7 +191,7 @@ h_clust <- function(X)
 
 ```{r}
 # List of cluster indices
-h_clust(X)$merge
+h_clust(X)$cluster
 ```
 
 ## Task 3
@@ -212,7 +207,6 @@ response <- rep(0,M)
 response[w > .7] <- 1
 
 input <- w
-boxplot(input~response)
 ```
 
 credit score and default
@@ -223,8 +217,7 @@ barometer and rainfall event
 
 ## Task 4
 
-```{r eval=FALSE, include=FALSE}
-# not run
+```{r}
 Smarket <- ISLR::Smarket
 x <- Smarket$Today
 Y <- Smarket$Direction
@@ -288,8 +281,10 @@ pars <- function(x,Y)
 
 #' Quadratice discriminant function
 #' @param x input var length n
-#' @param pars list of length K vectors containing estimated prior probabilities, sample averages, and sample standard deviation
-#' @return object containing `nK` matrix of posterior probabilities, and length `n` vector of predicted class
+#' @param pars list of length K vectors containing estimated prior probabilities, 
+#' sample averages, and sample standard deviation
+#' @return object containing `nK` matrix of posterior probabilities, and length 
+#' `n` vector of predicted class
 quadratic_df <- function(x,pars)
 {
   V <- t(as.data.frame(pars))
@@ -313,7 +308,8 @@ quadratic_df <- function(x,pars)
     return(exp(t1+t2+t3+t4+t5))
   }
   
-  d <- sapply(1:K,function(k) pk(k))
+  d <- sapply(1:K,pk)
+  
   class <- apply(d,1,function(x) 
     {
       colnames(V)[which.max(x)]
@@ -335,10 +331,10 @@ quadratic_df <- function(x,pars)
 
 ```{r}
 posteriors <- quadratic_df(x,pars(x,Y))
-qda_pred <- MASS::qda(Y~x,CV=TRUE)$class
-table(rownames(posterior),qda_pred)
+# qda_pred <- MASS::qda(Y~x,CV=TRUE)$class
+# table(rownames(posteriors),qda_pred)
 
-predict <- posterior[,apply(posterior,1,which.max)]
+# predict <- posteriors[,apply(posteriors,1,which.max)]
 ```
 
 # Exercise 2
@@ -415,7 +411,7 @@ c_k(m,10)
 
 # Exercise 3
 
-The following code provides an algorithm to find the binary split that minimises SSE of the sample.
+Estimate the binary split that minimises SSE of the sample to find the optimal root stump of a regression tree.
 
 ```{r}
 
