@@ -340,7 +340,10 @@ quadratic_df <- function(x,pars)
   
   return(
     structure(
-      .Data = list(posteriors=d,class=rownames(d))
+      .Data = list(
+        posteriors=d,
+        class=rownames(d)
+      )
     )
   )
 }
@@ -356,13 +359,15 @@ predict <- posterior[,apply(posterior,1,which.max)]
 
 # Exercise 2
 
-k-fold cross validation
+The code depicts a k-fold cross validation algorithm. The algorithm takes arguments `d` and `k`, where `d` is a $n\times2$ design matrix of normal random variables with input and response vectors, and `k` is a paramter controlling the number of k-fold subsamples. 
 
 ```{r}
-#' 
+#' k-fold cross validation
 #' @param d data matrix n * 2
-#' @param k number of k-fold intervals
-c_k = function(d,k) {
+#' @param k number of CV intervals
+#' @return
+#' Average MSE of k-fold cross-validation
+c_k = function(d,k=10) {
   
   # Get size of n -- num rows from d
   n = dim(d)[1]
@@ -373,7 +378,7 @@ c_k = function(d,k) {
   Y = d[,2]
   
   # k-folds
-  kf = 10
+  kf = k
   
   # int vector ck length kf
   # initialised with zeros
@@ -392,13 +397,16 @@ c_k = function(d,k) {
     # train subset
     tt = ii:ii2
     
-    # index of 
-    # train fold - out of sample
+    # index of train sample
+    # out of sample
     tr = setdiff(1:n,tt)
     
-    # Bayes post estimate
+    # beta hat estimate 
+    # simple OLS on train sample
     bh = sum(X[tr]*Y[tr]/sum(X[tr]^2))
     
+    # estimate response over
+    # using test sample
     yh = X[tt]*bh
     
     # ith C_k=kf
@@ -407,23 +415,82 @@ c_k = function(d,k) {
   }
   return(mean(ck))
 }
+```
 
-# Vector of random normal 
+The algorithm assumes that the relationship between input and response variables are characterised by simple linear regression, and computes the average TSME from k-fold cross validation of the regression.
+
+```{r}
+#  random normal input vector
 X <- rnorm(20,0,1)
-# Vector of 
+# response vector
 Y <- 1+2*X+rnorm(20,0,2)
 m <- matrix(c(X,Y),nrow=20)
-c_k(m)
+c_k(m,10)
 ```
 
 
 # Exercise 3
 
+Regression tree
+
+```{r}
+
+#' Binary split that minimise sse
+#' @param x vector or matrix of inputs
+#' @param y vector of responses
+#' @return 
+#' sse - minimized sse score
+#' split 
+obj <- function(x,y)
+{
+   regions <- sort(unique(x))
+   SSE <- c()
+   for(i in seq_along(regions))
+   {
+     si <- regions[i]
+     SSE[i] <- sum((y[x < si] - mean(y[x < si]))^2) +
+               sum((y[x >= si] - mean(y[x >= si]))^2)
+   }
+   
+   split <- regions[which.min(SSE)]
+   
+   return(c(sse=min(SSE),split=split)
+   )
+}
+
+```
+
+
 ```{r}
 X <- runif(10)
 Z <- runif(10)
 Y <- X-Z
+d <- data.frame(matrix(cbind(Y,X,Z),ncol = 3))
+colnames(d) <- c("Y","X","Z")
+
+formula <- terms.formula(Y~X+Z-1)
+X <- model.matrix(formula,d)
+y <- d[,as.character(formula)[2]]
+```
 
 
+```{r}
+split <- apply(X,2,obj,y)
+j <- which.min(split[1,])
+
+root_stump <- c(paste(names(j), ">=",
+                      round(split[2,j],5)),
+                paste(names(j), "<",
+                      round(split[2,j],5))
+)
+
+root_stump
+```
+
+```{r}
+{
+  plot(X)
+  abline(v=split[2,j])
+}
 
 ```
