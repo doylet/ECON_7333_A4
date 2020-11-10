@@ -315,7 +315,7 @@ quadratic_df <- function(x,pars)
   m <- V[2,] #mean
   S <- V[3,] #variance
   
-  #' the magic
+  # the magic
   pk <- function(k)
   {
     t1 <- -(x^2/(2*S[k]))
@@ -355,9 +355,10 @@ predict <- posterior[,apply(posterior,1,which.max)]
 k-fold cross validation
 
 ```{r}
+#' 
+#' @param d data matrix n * 2
+#' @param k number of k-fold intervals
 c_k = function(d,k) {
-  #' @d data matrix n * 2
-  #' @k number of k-fold intervals
   
   # Get size of n -- num rows from d
   n = dim(d)[1]
@@ -368,37 +369,36 @@ c_k = function(d,k) {
   Y = d[,2]
   
   # k-folds
-  #' 
   kf = 10
   
   # int vector ck length kf
   # initialised with zeros
   ck = rep(0,kf)
   
-  # For each kf[i]
-  # estimate ith k-fold MSE
+  # For each ith fold
+  # estimate k-fold train MSE
   for (i in 1:kf) {
     
-    #' lower bound fold
+    # lower bound fold
     ii = ceiling(1+n*(i-1)/kf)
     
-    #' upper bound fold
+    # upper bound fold
     ii2 = ceiling(n*i/kf)
     
-    #' train subset
+    # train subset
     tt = ii:ii2
     
-    #' index of 
-    #' train fold - out of sample
+    # index of 
+    # train fold - out of sample
     tr = setdiff(1:n,tt)
     
-    #' Bayesian post estimate
+    # Bayes post estimate
     bh = sum(X[tr]*Y[tr]/sum(X[tr]^2))
     
     yh = X[tt]*bh
     
-    #' ith C_k=kf
-    #' test mean square error
+    # ith C_k=kf
+    # test mean square error
     ck[i] = mean((Y[tt] - yh)^2)
   }
   return(mean(ck))
