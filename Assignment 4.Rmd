@@ -198,17 +198,99 @@ h_clust(X)$cluster
 
 Linear aggregation of M classifiers
 
-Bagging?
+Boosting?
+Class error rate
 
 ```{r}
-M <- 1000
-w <- runif(M)
-response <- rep(0,M)
-response[w > .7] <- 1
 
-input <- w
+normalise <- function(x) 
+{
+  n <- length(x)
+  e <- sapply(x,function(w) (w-min(x)) / (max(x)-min(x)))
+  return(e)
+}
+
+N <- 1000
+B <- 1000
+M <- 1000
+prob <- 0.5
+y <- rbinom(N,1,prob)
+X <- rnorm(N,.5,.25)
+X[y] <- X[y]-1
+X[!y] <- X[!y]+1
+X <- normalise(X)
+hist(X)
+
 ```
 
+
+```{r}
+
+Gini <- function(y,i)
+{
+  # contingency table y~X
+  ctable <- table(y,i)
+  
+  # sum contingency table
+  nx <- apply(ctable,2,sum)
+  
+  # pmk
+  pmk <- ctable/matrix(rep(nx,each=2),2,ncol(ctable))
+  
+  # gini index pmk
+  gini <- pmk*(1-pmk)
+  
+  #
+  G <- apply(gini,2,sum)
+  n <- sum(ctable)
+
+  # impurity
+  -sum(nx/n*G)
+}
+
+
+Gm <- function(x,y) 
+{
+  
+  n <- length(x)
+  cut_k <- NULL
+  
+  
+  u <- (sort(x)[2:n]+sort(x)[1:(n-1)])/2
+  v <- rep(NA,length(u))
+  
+  for(j in 1:length(u))
+  {
+    
+    k <- c(cut_k,u[j])
+    I <- Vectorize(function(x){sum(x<=k)})(x)
+    v[j] <- Gini(y,I)
+    
+  }
+  
+  k <- which.max(v)
+  knot = c(cut_k,u[k])
+  
+  return(knot)
+}
+
+
+adaBoost <- function(M,X,y,X)
+{
+  n <- length(y)
+  weights <- rep(1/n,n)
+  for(i in 1:n)
+  {
+    m <- 1:i
+    ii <- setdiff(1:n,i)
+    w <- weights[i]
+    W <- weights[ii]
+    err_m()
+  }
+  
+}
+
+```
 credit score and default
 
 leading economic indicator and interest rate change
@@ -397,7 +479,7 @@ c_k = function(d,k=10) {
 }
 ```
 
-The algorithm assumes that input and response variables are characterised by simple ordinary least squares relationship, and computes the average TSME from k-fold cross validation of the regression.
+The algorithm assumes that input and response variables are characterised by simple ordinary least squares relationship, $\hat{y}=x_i\hat{\beta}$ and computes the average TSME from k-fold cross validation of the regression.
 
 ```{r}
 #  random normal input vector
@@ -438,6 +520,21 @@ obj <- function(x,y)
    )
 }
 
+stump <- function(X,y)
+{
+  split <- apply(X,2,obj,y)
+  j <- which.min(split[1,])
+  l <- which.max(split[1,])
+  
+  m <- c(paste(names(j), ">=",
+               round(split[2,j],5)),
+         paste(names(j), "<",
+               round(split[2,j],5))
+  )
+  return(m)
+}
+
+
 ```
 
 
@@ -455,17 +552,7 @@ y <- d[,as.character(formula)[2]]
 
 
 ```{r}
-split <- apply(X,2,obj,y)
-j <- which.min(split[1,])
-l <- which.max(split[1,])
-
-root_stump <- c(paste(names(j), ">=",
-                      round(split[2,j],5)),
-                paste(names(j), "<",
-                      round(split[2,j],5))
-)
-
-root_stump
+stump(X,y)
 ```
 
 ```{r}
