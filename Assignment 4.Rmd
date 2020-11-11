@@ -8,18 +8,16 @@ editor_options:
   chunk_output_type: inline
 ---
 
-
-
 # Exercise 1
 
 ## Task 1
 
-Basis of step functions estimates a coefficient of the constant piecewise .. 
+Creation of a basis of step functions for nonparametric supervised learning.
 
 ```{r}
-#' 
-#' @param `x` "vector" a continuous variable
-#' @param `K` "constant"
+#' Helper function to determine cut intervals
+#' @param x vector of n observations
+#' @param K number of cut-off points K
 region_matrix <- function(x,K) {
   
   clevels <- levels(cut(x,K))
@@ -29,15 +27,18 @@ region_matrix <- function(x,K) {
   )
   return(as.data.frame(binmat))
 }
-
 ```
 
 ```{r}
-
+#' cut_2 calls region_matrix and classifies in to 
+#' binary indicator variables.
+#' @param x vector of n observations
+#' @param K number of cut-off points K
 cut_2 <- function(x,K) {
   n <- length(x)
   K <- K+1
-
+  
+  # the intervals
   r <- region_matrix(x,K)
   m <- matrix(0,n,K)
   
@@ -57,16 +58,20 @@ cut_2 <- function(x,K) {
 }
 ```
 
+Basis of step functions estimates a coefficient of the constant piecewise step function. 
+
 ```{r}
-#' 
+#' Basis funnction
 #' @param `x` vector of obs
 #' @param `K` number of steps
-stepfun <- function(x,K) {
+#' @return matrix of basis functions
+bassfun <- function(x,K) {
   
+  # instatiate matrix of step functions
   X <- cut_2(x,K)$c_matrix
   y <- x
   
-  # linear solution
+  # linear solution build basis
   weights <- solve(t(X)%*%X)%*%t(X)%*%y
   
   return (
@@ -81,21 +86,16 @@ stepfun <- function(x,K) {
 }
 ```
 
+The basis of step functions are appropriate for continuos random variables. 
+
 ```{r}
 age <- ISLR::Wage$age
-stepfun(age,5)$weights
+bassfun(age,5)$weights
 ```
 
 ## Task 2
 
-Hierarchical clustering
-
-```{r}
-X=mtcars[1:6,]
-# plot.new()
-# plot(hclust(dist(X)))
-
-```
+First iteration in a hierarchical clustering algorithm.
 
 ```{r}
 
@@ -187,8 +187,6 @@ h_clust <- function(X)
 }
 ```
 
-
-
 ```{r}
 # List of cluster indices
 h_clust(X)$cluster
@@ -198,34 +196,40 @@ h_clust(X)$cluster
 
 Linear aggregation of M classifiers
 
-Boosting?
-Class error rate
+Bosting provides a linear method for aggregating $M$ weak classifiers. The boosting method takes the arguments ...
 
 ```{r}
-
+# Generate some data.
 normalise <- function(x) 
 {
   n <- length(x)
   e <- sapply(x,function(w) (w-min(x)) / (max(x)-min(x)))
   return(e)
 }
+# simple dgf that generates a response binomial random variable, and random normal variable as input / weights.
+# and 
+dgf <- function(prob=0.5) 
+{
+  N <- 1000
+  
+  y <- rbinom(N,1,prob)
+  X <- rnorm(N,.5,.25)
+  X[y] <- X[y]-1
+  X[!y] <- X[!y]+1
+  X <- normalise(X)
+  
+  return(as.data.frame(cbind(y,X)))
+}
 
-N <- 1000
-B <- 1000
-M <- 1000
-prob <- 0.5
-y <- rbinom(N,1,prob)
-X <- rnorm(N,.5,.25)
-X[y] <- X[y]-1
-X[!y] <- X[!y]+1
-X <- normalise(X)
-hist(X)
-
+d <- dgf()
+X <- d$X
+y <- d$y
 ```
 
 
 ```{r}
 
+# Gini index
 Gini <- function(y,i)
 {
   # contingency table y~X
@@ -244,66 +248,93 @@ Gini <- function(y,i)
   G <- apply(gini,2,sum)
   n <- sum(ctable)
 
-  # impurity
+  # purity
   -sum(nx/n*G)
 }
 
+# log transforamtion of error rate
+a_m <- function() {
+  
+}
 
-Gm <- function(x,y) 
+# Tree classifier using gini index
+Gm_classifier <- function(x,y,w=1)
 {
-  
   n <- length(x)
-  cut_k <- NULL
+  region <- NULL
   
-  
+  # Sort and order 
   u <- (sort(x)[2:n]+sort(x)[1:(n-1)])/2
   v <- rep(NA,length(u))
   
+  # apply the weight
+  x <- w*x
+  
   for(j in 1:length(u))
   {
-    
-    k <- c(cut_k,u[j])
+    #
+    k <- c(region,u[j])
+    # pmk assignment
     I <- Vectorize(function(x){sum(x<=k)})(x)
+    # gini
     v[j] <- Gini(y,I)
-    
   }
   
   k <- which.max(v)
-  knot = c(cut_k,u[k])
-  
-  return(knot)
+  knot = c(region,u[k])
+  yh <- Vectorize(function(x){sum(x<=knot)})(x)
+  return(
+    .Data=list(knot=knot,response=yh)
+  )
 }
+```
 
 
-adaBoost <- function(M,X,y,X)
+
+```{r}
+#' Addaptive Boost to aggregate M binary classifiers
+#' @param X length M numeric vector of classifier weights
+#' @param y length M logical vector of binary model predictions
+#' @return
+adaBoost <- function(X,y)
 {
   n <- length(y)
+  M <- X
+  # initialise weights
   weights <- rep(1/n,n)
-  for(i in 1:n)
+  w <- 1/n
+  a <- numeric(length=n)
+  err <- 0
+  for(m in 1:M)
   {
-    m <- 1:i
-    ii <- setdiff(1:n,i)
-    w <- weights[i]
-    W <- weights[ii]
-    err_m()
+    w_ <- sum(weights[setdiff(1:M,m)])
+    w
+    
+    # Fit Gm with weight
+    # Gm[m] <- Gm_classifier(X,y,w)
+    M[m] <- sum(y[m]!=sum(X[m]*w <= y[m]))
+    
+    
+    # Calc error rate
+    err <- err + (w / w_) * M[m]
+    
+    # Compute logit transformation of error rate    
+    a[m] <- log((1-err)/err)
+    
+    w <- exp(a[m]*M[m])
   }
   
 }
 
+Gm <- Gm_classifier(X,y,w=1/4)
+
+adaBoost(X,y)
 ```
-credit score and default
-
-leading economic indicator and interest rate change
-
-barometer and rainfall event
 
 ## Task 4
 
-```{r}
-Smarket <- ISLR::Smarket
-x <- Smarket$Today
-Y <- Smarket$Direction
-```
+Computation of posterior probabilities for quadratic discriminant analysis in a classifcation problem with one input variable
+
 
 ```{r}
 #' Prior probabilites
@@ -534,9 +565,9 @@ stump <- function(X,y)
   return(m)
 }
 
-
 ```
 
+Generate the data.
 
 ```{r}
 X <- runif(10)
@@ -550,10 +581,14 @@ X <- model.matrix(formula,d)
 y <- d[,as.character(formula)[2]]
 ```
 
+Invoke the stump function and generate optimal tree stump.
 
 ```{r}
+#' @return optimal split
 stump(X,y)
 ```
+
+Plot the optimal split at root node.
 
 ```{r}
 {
