@@ -86,7 +86,9 @@ bassfun <- function(x,K) {
 }
 ```
 
-The basis of step functions are appropriate for continuos random variables. 
+The basis of step functions are appropriate for random variables where input and response are continuous and non-parametric. Basis functions depart from linear approaches to regression and maintain a suitable level of support as $p$ increases, making it favourable when modelling non-parametric supervised problems.
+
+Prediction with the basis function could be applied to `age` and `wage` of the `ISLR::Wage` data set, where input variable `age` is a vector of observered ages, and response variable `wage` is observed wages. The basis function takes an $n\times p$ matrix of input and response, and $k$ argument that provides the cut regime of step function. The basis function returns a matrix of step weights that estimate the average response level by step.
 
 ```{r}
 age <- ISLR::Wage$age
@@ -137,7 +139,7 @@ h_clust <- function(X)
   clusters <- lapply(1:N_1,function(x) x)
   
   # for(m in 1:N_1) {
-  for(m in 1:2) { # only want first iteration
+  for(m in 1:1) { # only want first iteration
 
     # Indices
     ind <- colnames(x)
@@ -186,17 +188,21 @@ h_clust <- function(X)
   )
 }
 ```
+The hierarchical clustering model estimates the optimal root stump of a regression tree and solves the binary classification that minimise RSS. The model takes $n \times p$ matrix of numeric random variables, and returns a list of $N-1$ clusters after a single iteration of binary classifciation.
+
+Because the algorithm is non-parametric and unsupervsed, it is suitable for learning problems that ignore statistical assumptions of distribution in favour of a flexible approach to modelling the datas true form. 
+
+...
 
 ```{r}
+X <- ISLR::Hitters 
 # List of cluster indices
 h_clust(X)$cluster
 ```
 
 ## Task 3
 
-Linear aggregation of M classifiers
-
-Bosting provides a linear method for aggregating $M$ weak classifiers. The boosting method takes the arguments ...
+Bosting provides a linear method for aggregating $M$ weak classifiers. The boosting method takes $M$ classifiers of numerical weights, and binary logical response variable. The algorithm is suitable for supervised non-parametrics classification problems, where the models are weakly fitted.
 
 ```{r}
 # Generate some data.
@@ -226,7 +232,6 @@ X <- d$X
 y <- d$y
 ```
 
-
 ```{r}
 
 # Gini index
@@ -250,11 +255,6 @@ Gini <- function(y,i)
 
   # purity
   -sum(nx/n*G)
-}
-
-# log transforamtion of error rate
-a_m <- function() {
-  
 }
 
 # Tree classifier using gini index
@@ -288,8 +288,6 @@ Gm_classifier <- function(x,y,w=1)
   )
 }
 ```
-
-
 
 ```{r}
 #' Addaptive Boost to aggregate M binary classifiers
@@ -326,8 +324,11 @@ adaBoost <- function(X,y)
   
 }
 
-Gm <- Gm_classifier(X,y,w=1/4)
+# Gm <- Gm_classifier(X,y,w=1/4)
+```
 
+
+```{r}
 adaBoost(X,y)
 ```
 
