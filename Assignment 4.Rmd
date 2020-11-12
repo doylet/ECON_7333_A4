@@ -202,7 +202,7 @@ h_clust(X)$cluster
 
 ## Task 3
 
-Bosting provides a linear method for aggregating $M$ weak classifiers. The boosting method takes $M$ classifiers of numerical weights, and binary logical response variable. The algorithm is suitable for supervised non-parametrics classification problems, where the models are weakly fitted.
+Boosting provides a linear method for aggregating $M$ weak classifiers. The boosting method takes $M$ classifiers of numerical weights, and binary logical response variable. The boosting algorithm is suitable for supervised non-parametrics classification problems, and aggregates an ensemble of weakly fitted to fit a model with good predictive properties.
 
 ```{r}
 # Generate some data.
@@ -293,7 +293,7 @@ Gm_classifier <- function(x,y,w=1)
 #' Addaptive Boost to aggregate M binary classifiers
 #' @param X length M numeric vector of classifier weights
 #' @param y length M logical vector of binary model predictions
-#' @return
+#' @return the boosted model
 adaBoost <- function(X,y)
 {
   n <- length(y)
@@ -321,7 +321,7 @@ adaBoost <- function(X,y)
     
     w <- exp(a[m]*M[m])
   }
-  
+  return(sign(sum(a*M)))
 }
 
 # Gm <- Gm_classifier(X,y,w=1/4)
@@ -334,8 +334,7 @@ adaBoost(X,y)
 
 ## Task 4
 
-Computation of posterior probabilities for quadratic discriminant analysis in a classifcation problem with one input variable
-
+Computation of posterior probabilities for quadratic discriminant analysis in a classifcation problem with one input variable. The QDA approach is suitable for classification problems where observed random variables are drawn from multivairate normal distribution.
 
 ```{r}
 #' Prior probabilites
@@ -442,6 +441,8 @@ quadratic_df <- function(x,pars)
 }
 
 ```
+
+The QDA model assumes that inputs are normally distributed with the parameters ..  
 
 ```{r}
 posteriors <- quadratic_df(x,pars(x,Y))
