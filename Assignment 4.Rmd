@@ -334,7 +334,7 @@ adaBoost(X,y)
 
 ## Task 4
 
-Computation of posterior probabilities for quadratic discriminant analysis in a classifcation problem with one input variable. The QDA approach is suitable for classification problems where observed random variables are drawn from multivairate normal distribution.
+Computation of posterior probabilities for quadratic discriminant analysis in a classifcation problem with one input variable. 
 
 ```{r}
 #' Prior probabilites
@@ -442,9 +442,12 @@ quadratic_df <- function(x,pars)
 
 ```
 
-The QDA model assumes that inputs are normally distributed with the parameters ..  
+The QDA model assumes that inputs are normally distributed, where each class $k$ has parameter $\pi_k$ prior probabilities, $\mu_k$ sample mean, and covariance matrix $\Sigma_k$. The QDA classifier is suitable for classification problems where observed random variables are drawn from multivairate normal distribution. For example, classification of trade signal based on a linear model of lagged portfolio returns.
 
 ```{r}
+X <- ISLR::Smarket
+Y <- X$Direction
+x <- X[,1]
 posteriors <- quadratic_df(x,pars(x,Y))
 # qda_pred <- MASS::qda(Y~x,CV=TRUE)$class
 # table(rownames(posteriors),qda_pred)
